@@ -21,13 +21,13 @@
           <a-icon type="upload" />
           <span class="nav-text">教学计划信息</span>
         </a-menu-item>
-        <a-menu-item key="4">
+        <a-menu-item key="StudentComponent">
           <a-icon type="upload" />
           <span class="nav-text">学生信息</span>
         </a-menu-item>
         <a-sub-menu key="sub2">
           <span slot="title"><a-icon type="mail" /><span>成绩管理</span></span>
-          <a-menu-item key="5">
+          <a-menu-item key="GradeComponent">
             成绩信息
           </a-menu-item>
           <a-menu-item key="6">

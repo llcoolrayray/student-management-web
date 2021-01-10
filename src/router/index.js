@@ -1,8 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home'
-import DepartmentComponent from "../components/department/DepartmentComponent";
-
 Vue.use(Router)
 
 export default new Router({
@@ -13,14 +11,24 @@ export default new Router({
       component: Home,
       children: [
         {
-          path: '/DepartmentComponent',
+          path: '/department',
           name: 'DepartmentComponent',
-          component: ()=>import('@/components/department/DepartmentComponent')
+          component: ()=>import('@/components/DepartmentComponent')
         },
         {
-          path: '/TeachingPlanComponent',
+          path: '/teaching-plan',
           name: 'TeachingPlanComponent',
-          component: ()=>import('@/components/plan/TeachingPlanComponent')
+          component: ()=>import('@/components/TeachingPlanComponent')
+        },
+        {
+          path: '/student',
+          name: 'StudentComponent',
+          component: ()=>import('@/components/StudentComponent')
+        },
+        {
+          path: '/grade',
+          name: 'GradeComponent',
+          component: ()=>import('@/components/GradeComponent')
         }
       ]
     }

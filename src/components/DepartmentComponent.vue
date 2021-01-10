@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-button type="primary" class="add-btn" @click="showModal">Add</a-button>
-    <a-table :columns="columns" :data-source="data" bordered>
+    <a-table :columns="columns" :data-source="deptData" bordered>
       <template
         v-for="col in ['name', 'address', 'phone']"
         :slot="col"
@@ -30,7 +30,7 @@
           <span v-else>
           <a :disabled="editingKey !== ''" @click="() => edit(record.key)">Edit</a>
           <a-divider type="vertical" />
-          <a>Delete</a>
+          <a @click="() => deleteItem(record.key)">Delete</a>
         </span>
         </div>
       </template>
@@ -43,17 +43,17 @@
       @ok="handleOk"
       @cancel="handleCancel"
     >
-      <a-form :form="form" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }" @submit="handleSubmit">
-        <a-form-item label="院系名称">
-          <a-input/>
-        </a-form-item>
-        <a-form-item label="地址">
-          <a-input/>
-        </a-form-item>
-        <a-form-item label="联系电话">
-          <a-input/>
-        </a-form-item>
-      </a-form>
+      <a-form-model ref="ruleForm" :model="dept" v-bind="layout">
+        <a-form-model-item has-feedback label="院系名称">
+          <a-input v-model="dept.name"/>
+        </a-form-model-item>
+        <a-form-model-item has-feedback label="地址">
+          <a-input v-model="dept.address" />
+        </a-form-model-item>
+        <a-form-model-item has-feedback label="联系电话">
+          <a-input v-model="dept.phone" />
+        </a-form-model-item>
+      </a-form-model>
     </a-modal>
   </div>
 </template>
@@ -84,20 +84,10 @@ const columns = [
   },
 ];
 
-const data = [];
-for (let i = 0; i < 5; i++) {
-  data.push({
-    key: i.toString(),
-    name: `Edrward ${i}`,
-    address: 32,
-    phone: `London Park no. ${i}`,
-  });
-}
 export default {
   data() {
-    this.cacheData = data.map(item => ({ ...item }));
     return {
-      data,
+      deptData:[],
       columns,
       editingKey: '',
       //modal
@@ -105,76 +95,92 @@ export default {
       visible: false,
       confirmLoading: false,
       //form
-      formLayout: 'horizontal',
-      form: this.$form.createForm(this, { name: 'coordinated' }),
+      dept: {
+        name: '',
+        address: '',
+        phone: '',
+      },
+      layout: {
+        labelCol: { span: 4 },
+        wrapperCol: { span: 14 },
+      },
     };
+  },
+  mounted() {
+    this.initDeptList();
   },
   methods: {
     handleChange(value, key, column) {
-      const newData = [...this.data];
+      const newData = [...this.deptData];
       const target = newData.filter(item => key === item.key)[0];
       if (target) {
         target[column] = value;
-        this.data = newData;
+        this.deptData = newData;
       }
     },
     edit(key) {
-      const newData = [...this.data];
+      const newData = [...this.deptData];
       const target = newData.filter(item => key === item.key)[0];
       this.editingKey = key;
       if (target) {
         target.editable = true;
-        this.data = newData;
+        this.deptData = newData;
       }
     },
     save(key) {
-      const newData = [...this.data];
-      const newCacheData = [...this.cacheData];
+      const newData = [...this.deptData];
       const target = newData.filter(item => key === item.key)[0];
-      const targetCache = newCacheData.filter(item => key === item.key)[0];
-      if (target && targetCache) {
-        delete target.editable;
-        this.data = newData;
-        Object.assign(targetCache, target);
-        this.cacheData = newCacheData;
-      }
-      this.editingKey = '';
+      this.axios.put("http://localhost:8080/v1/department/item",{
+        id: target.key,
+        name: target.name,
+        address: target.address,
+        phone: target.phone,
+      }).then(res => {
+        this.editingKey = '';
+        this.initDeptList();
+      })
+    },
+    deleteItem(key) {
+      let param = {id : key}
+      this.axios.delete("http://localhost:8080/v1/department/item", {params: param}).then(res => {
+        this.initDeptList();
+      })
     },
     cancel(key) {
-      const newData = [...this.data];
-      const target = newData.filter(item => key === item.key)[0];
       this.editingKey = '';
-      if (target) {
-        Object.assign(target, this.cacheData.filter(item => key === item.key)[0]);
-        delete target.editable;
-        this.data = newData;
-      }
+      this.initDeptList();
     },
     //modal
     showModal() {
       this.visible = true;
     },
     handleOk(e) {
-      this.ModalText = 'The modal will be closed after two seconds';
-      this.confirmLoading = true;
-      setTimeout(() => {
+      this.axios.post("http://localhost:8080/v1/department/item",{
+        name: this.dept.name,
+        address: this.dept.address,
+        phone: this.dept.phone,
+      }).then((response) => {
         this.visible = false;
-        this.confirmLoading = false;
-      }, 2000);
+        this.initDeptList();
+      })
+
     },
     handleCancel(e) {
       console.log('Clicked cancel button');
       this.visible = false;
     },
-    //form
-    handleSubmit(e) {
-      e.preventDefault();
-      this.form.validateFields((err, values) => {
-        if (!err) {
-          console.log('Received values of form: ', values);
-        }
-      });
-    },
+    initDeptList() {
+      this.axios.get("http://localhost:8080/v1/department/list").then(res => {
+          res.data.data.map(item => {
+            this.deptData.push({
+              key: item.id,
+              name: item.name,
+              address: item.address,
+              phone: item.phone,
+            })
+          })
+      })
+    }
   },
 };
 </script>
